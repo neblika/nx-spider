@@ -13,7 +13,7 @@ FIREFOX_DRIVER_PATH = './bin/geckodriver'
 class Browser:
   def __init__(self):
     super(Browser, self).__init__()
-    self.instance = None
+    self.win = None
     self._start()
 
 
@@ -23,6 +23,10 @@ class Browser:
       cls._alreadyExists = object.__new__(cls)
       
     return cls._alreadyExists
+
+
+  def __repr__(self):
+    return self.win
 
 
   def _start(self):
@@ -42,25 +46,25 @@ class Browser:
       options=firefox_options
     )
 
-    self.instance = browser
+    self.win = browser
 
 
   def refresh(self):
     print("Refreshing Browser")
-    self.instance.refresh()
+    self.win.refresh()
 
 
   def take_screenshot(self, filePath=None):
     time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S-%f')
     filePathDefault = f"screenshots/screen_{time}.png"
     filePath = filePath if filePath else filePathDefault
-    self.instance.save_screenshot(filePath)
+    self.win.save_screenshot(filePath)
     return filePath
 
 
   def quit(self):
     print("Browser -> closing browser.")
-    self.instance.quit()
+    self.win.quit()
 
 
 # os.environ.get('GECKODRIVER_PATH')
