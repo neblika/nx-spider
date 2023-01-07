@@ -34,14 +34,14 @@ class Spider:
       html = self.browser.win.page_source
       html_links = self.extract_links(html, rootLink)
 
-      print(html_links)
+      print("html_links", html_links)
 
       if nodeAttr:
         node_target = self.get_node(html, search=nodeAttr)
-        print(node_target.get_text())
+        print(self.extract_texts(soup=node_target))
       else:
         soup = BeautifulSoup(html)
-        print(soup.get_text())
+        print(self.extract_texts(soup=soup))   
 
     self.browser.quit()
 
@@ -65,6 +65,20 @@ class Spider:
       else:
         links.append(link)
     return links
+
+
+  def extract_texts(self, soup):
+    elements = soup.find_all(['p', "h1", "h2", "h3", "h4"]) # li
+    content = ""
+    for element in elements:
+      # print(element.name)
+      text = element.get_text()
+      text = re.sub(r'\n+', '\n', text)
+      text = re.sub(r'\s+', ' ', text)
+      if len(text) < 2: continue
+      # print(">>> ", text)
+      content += element.get_text() + " "
+    return content
 
 
   def get_domain(self, link):

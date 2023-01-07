@@ -19,7 +19,7 @@ class Modifier:
 	def node_target(self, link):
 		for modify in self._modifies:
 			if re.match(modify["regex"], link):
-				return modify["node"]
+				return modify.get("node")
 
 
 # matches = re.findall(regex, str(resHtml))

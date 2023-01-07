@@ -1,9 +1,9 @@
 [
 	{
-		"regex": "https:\\/\\/www\\.dictionary\\.com\\/e\\/.*",
-		"node": "class=article__entry"
+		"regex": "^https:\\/\\/www\\.dictionary\\.com\\/e\\/[^\\/]+$",
+		"nnode": "class=article__entry"
 	},{
-		"regex": "https:\\/\\/en\\.wikipedia\\.org\\/wiki\\/.*",
-		"node": "class=mw-parser-output"
+		"regex": "^https:\\/\\/en\\.wikipedia\\.org\\/wiki\\/[^\\/]+$",
+		"nnode": "class=mw-parser-output"
 	}
 ]
