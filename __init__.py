@@ -38,10 +38,16 @@ class Spider:
 
       if nodeAttr:
         node_target = self.get_node(html, search=nodeAttr)
-        print(self.extract_texts(soup=node_target))
+        print(self.extract_texts(
+          soup=node_target,
+          excludes=["nav", "aside", "header", "footer"]
+        ))
       else:
         soup = BeautifulSoup(html)
-        print(self.extract_texts(soup=soup))   
+        print(self.extract_texts(
+          soup=soup,
+          excludes=["nav", "aside", "header", "footer"]
+        ))   
 
     self.browser.quit()
 
@@ -67,17 +73,28 @@ class Spider:
     return links
 
 
-  def extract_texts(self, soup):
-    elements = soup.find_all(['p', "h1", "h2", "h3", "h4"]) # li
+  def decompose_nodes(self, soup, nodes):
+    """ delete nodes from soup """
+    if not soup or not nodes: return
+    elements = soup.find_all(nodes)
+    for element in elements:
+      element.decompose()
+
+
+  def extract_texts(self, soup, excludes=None):
+    """ return a text (content) from soup """
+    self.decompose_nodes(
+      soup=soup,
+      nodes=excludes
+    )
+    elements = soup.find_all(['p', "h1", "h2", "h3", "h4", "li"])
     content = ""
     for element in elements:
-      # print(element.name)
       text = element.get_text()
       text = re.sub(r'\n+', '\n', text)
-      text = re.sub(r'\s+', ' ', text)
+      text = re.sub(r' +', ' ', text)
       if len(text) < 2: continue
-      # print(">>> ", text)
-      content += element.get_text() + " "
+      content += text + " "
     return content
 
 
