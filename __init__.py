@@ -1,9 +1,9 @@
 from bs4 import BeautifulSoup
 from modifier import Modifier
 from browser import Browser
+from copy import deepcopy
 import json
 import re
-
 
 print("======================")
 print("=== Spider Project ===")
@@ -16,8 +16,15 @@ class Spider:
     super(Spider, self).__init__()
     self.browser = Browser()
     self.modifier = Modifier()
+    self._scanning = True
     self.links = []
+    self.scanned_links = []
     self._load_urls_list()
+
+
+  @property
+  def scanning(self):
+    return self._scanning
 
 
   def _load_urls_list(self):
@@ -26,38 +33,43 @@ class Spider:
 
 
   def start(self):
-    for link in self.links:
-      print(f"searching: {link}")
-      rootLink, domain = self.get_domain(link)
-      nodeAttr = self.modifier.node_target(link)
-      self.browser.win.get(link)
-      html = self.browser.win.page_source
-      html_links = self.extract_links(html, rootLink)
+    while self._scanning:
+      for link in self.links:
+        if link in self.scanned_links:
+          print(f"link was already scanned: {link}")
+          continue
 
-      print("html_links", html_links)
+        self.scanned_links.append(link)
+        print(f"searching: {link}")
+        rootLink, domain = self.get_domain(link)
+        nodeAttr = self.modifier.node_target(link)
+        self.browser.win.get(link)
 
-      if nodeAttr:
+        html = self.browser.win.page_source
+        html_links = self.extract_links(html, rootLink)
+        # print("html_links", html_links)
+
+        for html_link in html_links:
+          if html_link not in self.links:
+            self.links.append(html_link)
+
         node_target = self.get_node(html, search=nodeAttr)
         print(self.extract_texts(
           soup=node_target,
           excludes=["nav", "aside", "header", "footer"]
         ))
-      else:
-        soup = BeautifulSoup(html)
-        print(self.extract_texts(
-          soup=soup,
-          excludes=["nav", "aside", "header", "footer"]
-        ))   
 
     self.browser.quit()
 
 
-  def get_node(self, html, search):
+  def get_node(self, html, search=None):
     soup = BeautifulSoup(html)
-    nodeAttr = search.split("=")
-    nodeMatches = soup.find_all(attrs={nodeAttr[0]: nodeAttr[1]})
-    node_target = nodeMatches[0]
-    return node_target
+    if search:
+      nodeAttr = search.split("=")
+      nodeMatches = soup.find_all(attrs={nodeAttr[0]: nodeAttr[1]})
+      node_target = nodeMatches[0] if len(nodeMatches) else soup 
+      return node_target
+    return soup
 
 
   def extract_links(self, html, rootLink):
@@ -70,7 +82,7 @@ class Spider:
         links.append(rootLink + link)
       else:
         links.append(link)
-    return links
+    return set(links)
 
 
   def decompose_nodes(self, soup, nodes):
@@ -91,6 +103,7 @@ class Spider:
     content = ""
     for element in elements:
       text = element.get_text()
+      if element.name in ["h1" , "h2", "h3", "h4"]: text += "\n"
       text = re.sub(r'\n+', '\n', text)
       text = re.sub(r' +', ' ', text)
       if len(text) < 2: continue
