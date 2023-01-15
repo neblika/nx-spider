@@ -46,7 +46,7 @@ class Spider:
         self.browser.win.get(link)
 
         html = self.browser.win.page_source
-        html_links = self.extract_links(html, rootLink)
+        html_links = self.extract_page_links(html, rootLink)
         # print("html_links", html_links)
 
         for html_link in html_links:
@@ -58,6 +58,8 @@ class Spider:
           soup=node_target,
           excludes=["nav", "aside", "header", "footer"]
         ))
+        sources = self.extract_src_links(html, rootLink)
+        print(sources)
 
     self.browser.quit()
 
@@ -72,7 +74,7 @@ class Spider:
     return soup
 
 
-  def extract_links(self, html, rootLink):
+  def extract_page_links(self, html, rootLink):
     soup = BeautifulSoup(html)
     nodeMatches = soup.find_all(href=True)
     links = []
@@ -83,6 +85,21 @@ class Spider:
       else:
         links.append(link)
     return set(links)
+
+
+  def extract_src_links(self, html, rootLink):
+    soup = BeautifulSoup(html)
+    nodeMatches = soup.find_all(src=True)
+    sources = []
+    for element in nodeMatches:
+      is_rel_path = not element["src"].startswith("http")
+      source = {
+        "src_link": rootLink + element["src"] if is_rel_path else element["src"],
+        "src_alt": element.get("alt", ""),
+        "src_domain": rootLink
+      }
+      sources.append(source)
+    return sources
 
 
   def decompose_nodes(self, soup, nodes):
