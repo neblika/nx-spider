@@ -2,6 +2,8 @@ from bs4 import BeautifulSoup
 from modifier import Modifier
 from browser import Browser
 from copy import deepcopy
+from uuid import uuid4
+import requests
 import json
 import re
 
@@ -58,7 +60,7 @@ class Spider:
           soup=node_target,
           excludes=["nav", "aside", "header", "footer"]
         ))
-        sources = self.extract_src_links(html, rootLink)
+        sources = self.extract_src_links(html, rootLink, page_link=link)
         print(sources)
 
     self.browser.quit()
@@ -87,18 +89,30 @@ class Spider:
     return set(links)
 
 
-  def extract_src_links(self, html, rootLink):
+  def extract_src_links(self, html, rootLink, page_link):
     soup = BeautifulSoup(html)
-    nodeMatches = soup.find_all(src=True)
+    nodeMatches = soup.find_all(["img"], src=True)
     sources = []
     for element in nodeMatches:
       is_rel_path = not element["src"].startswith("http")
-      source = {
-        "src_link": rootLink + element["src"] if is_rel_path else element["src"],
-        "src_alt": element.get("alt", ""),
-        "src_domain": rootLink
-      }
-      sources.append(source)
+      src_link = rootLink + element["src"] if is_rel_path else element["src"]
+      try:
+        data = requests.get(src_link)
+        if "DOCTYPE" in str(data.content[:10]): continue
+
+        source = {
+          "file_path": f"./sources/images/{str(uuid4())}.jpeg",
+          "src_link": src_link,
+          "src_alt": element.get("alt", ""),
+          "src_domain": rootLink,
+          "src_page": page_link
+        }
+
+        with open(source["file_path"], 'wb') as file:
+          file.write(data.content)
+        sources.append(source)
+      except Exception as e:
+        print("error (image extractor)", e)
     return sources
 
 
