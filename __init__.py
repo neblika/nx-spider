@@ -1,3 +1,4 @@
+from collections import Counter
 from bs4 import BeautifulSoup
 from modifier import Modifier
 from browser import Browser
@@ -56,12 +57,17 @@ class Spider:
             self.links.append(html_link)
 
         node_target = self.get_node(html, search=nodeAttr)
-        print(self.extract_texts(
+        page_content = self.extract_texts(
           soup=node_target,
           excludes=["nav", "aside", "header", "footer"]
-        ))
-        sources = self.extract_src_links(html, rootLink, page_link=link)
-        print(sources)
+        )
+        print(page_content)
+
+        # sources = self.extract_src_links(html, rootLink, page_link=link)
+        # print(sources)
+
+        words_freq = self.wordFreq(page_content)
+        print("words_freq", words_freq)
 
     self.browser.quit()
 
@@ -140,6 +146,16 @@ class Spider:
       if len(text) < 2: continue
       content += text + " "
     return content
+
+
+  def wordFreq(self, text):
+    excludes = ["the", "a", "and", "to", "is", "of", "an", "generally", "however", "also", "it", "even"]
+    bag_of_freq = Counter(text.split()).most_common()
+    new_bag = []
+    for word, freq in bag_of_freq:
+      if word.lower() not in excludes and freq > 2:
+        new_bag.append((word, freq))
+    return new_bag
 
 
   def get_domain(self, link):
